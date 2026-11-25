@@ -14,23 +14,29 @@ SmartStick is a foldable walking-stick prototype with left and right ultrasonic 
 | Earlier development and bench tests | [SenseStep archive guide](CEG2002_Project_Codes/SenseStep/README.md) · [MSP430 tests](CEG2002_Project_Codes/SenseStep/testing/msp430) · [ESP32 tests](CEG2002_Project_Codes/SenseStep/testing/esp32) |
 | Wristband enclosure generators | [Mechanical scripts](CEG2002_Project_Codes/SenseStep/mechanical) |
 
+## How the final firmware works
+
+1. At startup, the MSP430 enters low-power mode (LPM3). Timer_A2 wakes it every 250 ms to sample the FSR. A reading above 500 ADC counts wakes the cane and opens the sensor covers.
+2. While the grip is held, both HC-SR04 sensors share one trigger. Timer_A1 times the two echo pulses. A valid distance below 200 mm lights the corresponding onboard LED. The buzzer sounds when the water sensor reads above 1,000 ADC counts.
+3. After eight consecutive released-grip checks, the MSP430 clears the LEDs and buzzer, sends zero distances to the ESP32, closes the covers, and returns to LPM3.
+
+The cane sends a five-byte UART frame for each side at 9600 baud, 8N1. A frame contains `0xA5`, the side (`0` for left, `1` for right), the low and high 7-bit fields of the distance in millimeters, and the XOR of the side and distance fields. A zero distance clears the alert or indicates an invalid measurement.
+
 ## Final-build MSP430F5529 wiring
 
 | MSP430 pin | Part | Signal or connection |
 | --- | --- | --- |
 | P1.2 (TA0.1) | Left MG90S servo | PWM signal |
 | P1.3 (TA0.2) | Right MG90S servo | PWM signal |
-| P1.4 | Capacitive touch pad | Sense / `RECV_PIN`, connected to the copper pad and one end of the 10 MΩ resistor |
-| P1.6 | Capacitive touch pad | Drive / `SEND_PIN`, connected to the other end of the 10 MΩ resistor |
 | P2.0 | Active buzzer | Buzzer +. Buzzer − connects to GND. |
 | P3.5 | Both HC-SR04 sensors | Shared TRIG |
 | P2.5 | Left HC-SR04 | ECHO through a 10 kΩ / 15 kΩ voltage divider |
 | P1.5 | Right HC-SR04 | ECHO through a 10 kΩ / 15 kΩ voltage divider |
 | P3.3 (UCA0TXD) | Cane-side XIAO ESP32-S3 | Connect to D7 / RX. UART uses 9600 baud, 8N1. |
 | P7.0 (A12) | Water sensor | Signal S through a 10 kΩ / 15 kΩ voltage divider |
-| P6.1 (A1) | FSR grip sensor | Wiring specification. The checked-in firmware samples P6.0 (A0). See the note below. |
-
-**Grip sensor wiring check.** The wiring specification lists P6.1 (A1), while [`main.c`](CEG2002_Project_Codes/MSP_Codes/main.c) selects P6.0 (A0) with `ADC12INCH_0`. When using the checked-in firmware, the FSR and 10 kΩ pull-down junction goes to P6.0. Check the assembled board before flashing or rewiring. The capacitive touch pins above are recorded wiring assignments. The checked-in cane firmware uses the FSR for grip detection.
+| P6.0 (A0) | FSR grip sensor | Junction between the FSR and the 10 kΩ pull-down |
+| P1.0 | Onboard red LED | Left obstacle indicator |
+| P4.7 | Onboard green LED | Right obstacle indicator |
 
 **Power and ground**
 
