@@ -1,3 +1,4 @@
+// Author: Alfred
 // MSP-EXP430F5529LP. See the pin map in README.md.
 #include <msp430.h>
 #include <stdbool.h>
