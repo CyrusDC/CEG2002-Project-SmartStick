@@ -1,3 +1,4 @@
+// Author: Alfred
 // Upload this sketch to both XIAO ESP32-S3 wrist boards.
 // D10 -> motor module IN. Open Serial Monitor at 115200 and send m for its MAC.
 #include <Arduino.h>
