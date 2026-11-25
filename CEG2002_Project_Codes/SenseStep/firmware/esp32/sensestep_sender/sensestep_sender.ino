@@ -1,3 +1,4 @@
+// Author: Alfred
 // XIAO ESP32-S3 cane sender. Tested with Arduino-ESP32 3.3.12.
 // MSP430 P3.3/TX -> D7/RX, GND -> GND. USB Serial Monitor: 115200 baud.
 #include <Arduino.h>
