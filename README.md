@@ -16,11 +16,25 @@ Component tests and earlier prototypes are documented in the [testing guide](tes
 
 ## How the final firmware works
 
-1. At startup, the MSP430 enters low-power mode (LPM3). Timer_A2 wakes it every 250 ms to sample the FSR. A reading above 500 ADC counts wakes the cane and opens the sensor covers.
+1. At startup, the MSP430 enters low-power mode (LPM3). Timer_A2 wakes it every 250 ms to sample the FSR. A reading above 500 ADC counts wakes the cane and opens the sensor covers. During each ADC conversion, the CPU waits in LPM0 until the ADC12 ISR returns the reading.
 2. While the grip is held, both HC-SR04 sensors share one trigger. Timer_A1 times the two echo pulses. A valid distance below 200 mm lights the corresponding onboard LED. The buzzer sounds when the water sensor reads above 1,000 ADC counts.
 3. After eight consecutive released-grip checks, the MSP430 clears the LEDs and buzzer, sends zero distances to the ESP32, closes the covers, and returns to LPM3.
 
 The cane sends a five-byte UART frame for each side at 9600 baud, 8N1. A frame contains `0xA5`, the side (`0` for left, `1` for right), the low and high 7-bit fields of the distance in millimeters, and the XOR of the side and distance fields. A zero distance clears the alert or indicates an invalid measurement.
+
+## CEG2002 submission requirements
+
+| Requirement | Where to find it |
+| --- | --- |
+| Booster Board component | Exempt for this team. |
+| Two or more microcontroller boards | MSP430F5529 cane controller, ESP32 sender and ESP32 wrist receiver. |
+| Modular functions | `read_adc_channel()`, `update_sensors()`, `openCover()`, `send_distance()` and the ESP32 parsing and haptic functions. |
+| Two explicit ISRs | `Timer2_A0_ISR()` wakes the MSP430 for grip checks. `ADC12_ISR()` collects conversions from ADC12MEM0. |
+| Two or more timer functions | Timer_A0 generates servo PWM, Timer_A1 measures ultrasonic echo duration, and Timer_A2 schedules the 250 ms grip poll. |
+| ADC | `read_adc_channel()` samples the FSR on A0 and water sensor on A12. |
+| Communications | USCI_A0 UART carries distance frames to the ESP32 sender. ESP-NOW carries readings from the sender to the wrist receivers. |
+| Power saving | The MSP430 enters LPM3 between idle grip polls and LPM0 during ADC conversions. |
+| Source documentation | File and routine descriptions are in the source. Alfred's ESP32 and UART contributions are marked `(A)`. Confirm the remaining author credits and complete the individual reflections at the end of the MSP430 source. |
 
 ## Final-build MSP430F5529 wiring
 
