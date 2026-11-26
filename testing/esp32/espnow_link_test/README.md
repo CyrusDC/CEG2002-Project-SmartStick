@@ -1,13 +1,13 @@
 # SenseStep: first ESP-NOW bench test
 
-For the newer first-flash samples that need no MAC address edits, use
-`../FIRST_FLASH.md` with `../board_a_sender/board_a_sender.ino` and
-`../board_b_receiver/board_b_receiver.ino`. The sketch in this folder is the
-configurable MAC-based alternative; do not mix the two sets of firmware.
+For a broadcast test that needs no MAC address edits, pair
+[`board_a_sender.ino`](../board_a_sender/board_a_sender.ino) with
+[`board_b_receiver.ino`](../board_b_receiver/board_b_receiver.ino).
+This sketch uses its own configurable MAC-based protocol.
 
-For the current motor module selection and revised wrist wiring, see
-`../../docs/SenseStep_Connectivity_and_Haptics_Guide.docx`. The DRV2605L and
-LRA chain below records the original proposal, not the current candidate.
+The DRV2605L and LRA chain below records the original proposal.
+See the [repository README](../../../README.md) for the submission firmware
+and wrist wiring.
 
 Two Seeed Studio XIAO ESP32-S3 boards, using Arduino IDE and the Espressif
 Arduino-ESP32 3.x board package. No extra ESP-NOW library is needed.
@@ -29,12 +29,6 @@ ESP-NOW directly. This sketch tests the radio link before adding UART,
 sensors, or haptics. Node 1 sends simulated distances; node 2 sends an
 application acknowledgement (ACK). An ACK proves the receiver's application
 handled a packet, beyond merely queuing a send request.
-
-The initial workspace contained proposal material and mechanical models.
-Radio test firmware has since been added under `firmware/`.
-`SenseStep_Proposal_Slides.pptx` is the reference for the cane architecture.
-`CEG Joint Project.pdf` describes a different group's knee rehabilitation
-project.
 
 ## 1. Hardware
 
