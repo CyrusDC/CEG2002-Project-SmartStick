@@ -1,7 +1,7 @@
 /*
  * SmartStick cane firmware for the MSP430F5529.
  * Version control: see the Git history for the submission baseline and revisions.
- * Author credits: Alfred (A) for UART. See the inline credit key below.
+ * The inline credit key lists the team member responsible for each section.
  * The analog, covers, power, ultrasonic and UART modules configure the peripherals.
  * On startup, the cane enters LPM3 and Timer_A2 wakes it every 250 ms.
  * ADC12 samples the grip FSR on P6.0 and the water sensor on P7.0.
@@ -10,19 +10,17 @@
  * Timer_A1 measures the left and right echo pulses from a shared trigger.
  * The main loop updates the obstacle LEDs and water buzzer from the readings.
  * P3.3 transmits framed distances to the ESP32 sender at 9600 baud, 8N1.
- * The original wiring note specified ESP RX GPIO 18. See the README for D7.
+ * The cane-side ESP32 sender receives UART on D7.
  * After eight released-grip checks, the cane clears alerts and closes the covers.
  * The cane then powers down ADC12, stops the active timers and returns to LPM3.
  */
 
-/* Inline credit key
- * (A) Alfred, confirmed UART contribution.
- * (C) Cyrus, proposed servo and PWM assignment.
- * (F) Farid, proposed ultrasonic ranging assignment.
- * (J) Joseph, proposed analog sensing and buzzer assignment.
- * (HX) HuiXin, proposed program flow and sleep assignment.
- * The proposed assignments are pending teammate confirmation.
- * (AI-assisted) ADC completion interrupt added during submission preparation.
+/* Confirmed team responsibilities
+ * (A) Alfred, MSP430 UART and ESP32 firmware.
+ * (C) Cyrus, servo PWM and cover motion.
+ * (F) Farid, ultrasonic ranging and obstacle LEDs.
+ * (J) Joseph, analog sensing, ADC12 interrupt and water buzzer.
+ * (HX) HuiXin, program flow and low-power operation.
  */
 
 #include "analog.h"
@@ -101,7 +99,7 @@ int main(void)
 
 /*
  * Individual reflections
- * Alfred (A):
+ * Alfred (A)
  * I wrote the ESP32 sender and wrist receiver sketches and the UART link.
  * I applied CEG2002 UART concepts by matching the baud rate and frame format.
  * I used a start byte so the sender could recover alignment in the byte stream.

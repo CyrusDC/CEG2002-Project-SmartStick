@@ -45,7 +45,9 @@ The cane sends a five-byte UART frame for each side at 9600 baud, 8N1. A frame c
 | ADC | `read_adc_channel()` samples the FSR on A0 and water sensor on A12. |
 | Communications | USCI_A0 UART carries distance frames to the ESP32 sender. ESP-NOW carries readings from the sender to the wrist receivers. |
 | Power saving | The MSP430 enters LPM3 between idle grip polls and LPM0 during ADC conversions. |
-| Source documentation | File and routine descriptions are in the source. Alfred's ESP32 and UART contributions are marked `(A)`. Confirm the remaining author credits and complete the individual reflections at the end of the MSP430 source. |
+| Source documentation | The firmware includes program summaries, function descriptions, and inline initials for the confirmed team responsibilities. All five individual reflections are at the end of [`main.c`](firmware/msp430/main.c). |
+
+The inline initials identify team responsibility for each section. Joseph is responsible for the analog sensing module. The team used AI assistance for the ADC12 completion interrupt, source organization, and drafting comments and reflections.
 
 ## Final-build MSP430F5529 wiring
 
@@ -62,8 +64,6 @@ The cane sends a five-byte UART frame for each side at 9600 baud, 8N1. A frame c
 | P6.0 (A0) | FSR grip sensor | Junction between the FSR and the 10 kΩ pull-down |
 | P1.0 | Onboard red LED | Left obstacle indicator |
 | P4.7 | Onboard green LED | Right obstacle indicator |
-
-The MSP430 source header records ESP RX as GPIO 18. The submitted sender sketch sets RX to D7, which is the pin shown in this wiring table.
 
 **Power and ground**
 

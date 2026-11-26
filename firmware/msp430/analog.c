@@ -9,8 +9,8 @@
 volatile uint16_t water_val      = 0;  /* Keep the latest water sample visible in CCS (J). */
 volatile uint16_t fsr_val        = 0;  /* Keep the latest grip sample visible in CCS (J). */
 
-static volatile uint16_t adc_result;  /* Store the conversion result shared by the ISR and foreground (AI-assisted). */
-static volatile bool adc_ready;  /* Flag when the ISR has published the conversion (AI-assisted). */
+static volatile uint16_t adc_result;  /* Store the conversion result shared by the ISR and foreground (J). */
+static volatile bool adc_ready;  /* Flag when the ISR has published the conversion (J). */
 
 // Configure the buzzer and ADC12 channels for grip and water sensing.
 // Takes no arguments. Enable the MEM0 completion interrupt.
@@ -27,7 +27,7 @@ void analog_init(void)
     ADC12CTL0 = ADC12ON | ADC12SHT0_6;  /* Enable the ADC and select its sampling window (J). */
     ADC12CTL1 = ADC12SHP;  /* Use the ADC sample-and-hold timer (J). */
     ADC12IFG  = 0;  /* Clear pending ADC conversion flags (J). */
-    ADC12IE   = ADC12IE0;  /* Enable the ADC12MEM0 completion interrupt (AI-assisted). */
+    ADC12IE   = ADC12IE0;  /* Enable the ADC12MEM0 completion interrupt (J). */
 }
 
 // Sample ADC channel inch (ADC12INCH_0 for grip or ADC12INCH_12 for water).
@@ -35,19 +35,19 @@ void analog_init(void)
 // before calling this function. It must be called from foreground code.
 static uint16_t read_adc_channel(uint8_t inch)
 {
-    __disable_interrupt();  /* Mask interrupts until the foreground enters LPM0 (AI-assisted). */
+    __disable_interrupt();  /* Mask interrupts until the foreground enters LPM0 (J). */
     ADC12CTL0 &= ~ADC12ENC;  /* Unlock the channel configuration (J). */
     ADC12MCTL0 = inch | ADC12EOS;  /* Route the selected analog input to MEM0 (J). */
-    ADC12IFG &= ~ADC12IFG0;  /* Clear a pending MEM0 completion flag before starting (AI-assisted). */
-    adc_ready = false;  /* Mark the new conversion as incomplete (AI-assisted). */
+    ADC12IFG &= ~ADC12IFG0;  /* Clear a pending MEM0 completion flag before starting (J). */
+    adc_ready = false;  /* Mark the new conversion as incomplete (J). */
     ADC12CTL0 |= ADC12ENC | ADC12SC;  /* Enable and start a single ADC conversion (J). */
-    while (!adc_ready)  /* Wait until the ADC ISR publishes the current result (AI-assisted). */
+    while (!adc_ready)  /* Wait until the ADC ISR publishes the current result (J). */
     {
-        __bis_SR_register(LPM0_bits | GIE);  /* Enter LPM0 and enable interrupts in the same instruction (AI-assisted). */
-        __disable_interrupt();  /* Check completion with interrupts masked after any wake-up (AI-assisted). */
+        __bis_SR_register(LPM0_bits | GIE);  /* Enter LPM0 and enable interrupts in the same instruction (J). */
+        __disable_interrupt();  /* Check completion with interrupts masked after any wake-up (J). */
     }
-    __enable_interrupt();  /* Restore foreground interrupt handling (AI-assisted). */
-    return adc_result;  /* Return the sample published by the ADC ISR (AI-assisted). */
+    __enable_interrupt();  /* Restore foreground interrupt handling (J). */
+    return adc_result;  /* Return the sample published by the ADC ISR (J). */
 }
 
 // Disable conversion and power down ADC12. Takes no arguments.
@@ -90,10 +90,10 @@ void analog_clear_buzzer(void)
 
 // Handle the ADC12 MEM0 completion interrupt. Hardware supplies no arguments.
 // Copy the result before flagging it ready, then resume the foreground caller.
-#pragma vector = ADC12_VECTOR  /* Bind the ADC ISR to the ADC12 vector (AI-assisted). */
+#pragma vector = ADC12_VECTOR  /* Bind the ADC ISR to the ADC12 vector (J). */
 __interrupt void ADC12_ISR(void)
 {
-    adc_result = ADC12MEM0;  /* Read MEM0 and clear its interrupt flag (AI-assisted). */
-    adc_ready = true;  /* Publish the result to the waiting foreground code (AI-assisted). */
-    __bic_SR_register_on_exit(LPM0_bits);  /* Clear CPUOFF in the saved status register (AI-assisted). */
+    adc_result = ADC12MEM0;  /* Read MEM0 and clear its interrupt flag (J). */
+    adc_ready = true;  /* Publish the result to the waiting foreground code (J). */
+    __bic_SR_register_on_exit(LPM0_bits);  /* Clear CPUOFF in the saved status register (J). */
 }
