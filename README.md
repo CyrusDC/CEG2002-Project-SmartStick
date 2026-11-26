@@ -8,11 +8,22 @@ SmartStick is a foldable walking-stick prototype with left and right ultrasonic 
 
 | Program | Source |
 | --- | --- |
-| MSP430 cane | [`main.c`](firmware/msp430/main.c) |
+| MSP430 cane | [`main.c`](firmware/msp430/main.c) and the other C sources in [`firmware/msp430`](firmware/msp430) |
 | ESP32 sender | [`sensestep_sender.ino`](firmware/esp32/sensestep_sender/sensestep_sender.ino) |
 | ESP32 wrist receiver | [`sensestep_wrist.ino`](firmware/esp32/sensestep_wrist/sensestep_wrist.ino) and its two headers in the [receiver sketch folder](firmware/esp32/sensestep_wrist) |
 
 Component tests and earlier prototypes are documented in the [testing guide](testing/README.md).
+
+### MSP430 modules
+
+| Source | Responsibility |
+| --- | --- |
+| [`main.c`](firmware/msp430/main.c) | Startup, active sensing loop, and release handling |
+| [`analog.c`](firmware/msp430/analog.c) | Grip and water readings, water buzzer, and the ADC12 completion ISR |
+| [`covers.c`](firmware/msp430/covers.c) | Timer_A0 servo PWM and cover movement |
+| [`power.c`](firmware/msp430/power.c) | Clock setup, LPM3, and the Timer_A2 wake ISR |
+| [`uart.c`](firmware/msp430/uart.c) | UART setup and distance frames for the ESP32 |
+| [`ultrasonic.c`](firmware/msp430/ultrasonic.c) | Timer_A1 echo measurement and obstacle LEDs |
 
 ## How the final firmware works
 
@@ -28,7 +39,7 @@ The cane sends a five-byte UART frame for each side at 9600 baud, 8N1. A frame c
 | --- | --- |
 | Booster Board component | Exempt for this team. |
 | Two or more microcontroller boards | MSP430F5529 cane controller, ESP32 sender and ESP32 wrist receiver. |
-| Modular functions | `read_adc_channel()`, `update_sensors()`, `openCover()`, `send_distance()` and the ESP32 parsing and haptic functions. |
+| Modular functions | `read_adc_channel()`, `ultrasonic_read()`, `openCover()`, `send_distance()` and the ESP32 parsing and haptic functions. |
 | Two explicit ISRs | `Timer2_A0_ISR()` wakes the MSP430 for grip checks. `ADC12_ISR()` collects conversions from ADC12MEM0. |
 | Two or more timer functions | Timer_A0 generates servo PWM, Timer_A1 measures ultrasonic echo duration, and Timer_A2 schedules the 250 ms grip poll. |
 | ADC | `read_adc_channel()` samples the FSR on A0 and water sensor on A12. |
@@ -62,7 +73,7 @@ The MSP430 source header records ESP RX as GPIO 18. The submitted sender sketch 
 
 ## Build and upload
 
-1. In Code Composer Studio, create an MSP430F5529 project and add `firmware/msp430/main.c` as its entry point.
+1. In Code Composer Studio, create an MSP430F5529 project and add all six `.c` files and their headers from [`firmware/msp430`](firmware/msp430). Keep the files together so the local includes resolve. Replace any template `main.c` with the project's `main.c`.
 2. Open the ESP32 sketches in Arduino IDE. The checked-in sketches target the `XIAO_ESP32S3` board with Espressif Arduino core 3.3.12 and USB CDC On Boot enabled.
 3. Upload the same receiver sketch to each wrist board. Connect D10 to the motor module input and share ground. Open Serial Monitor at 115200 baud and send `m` to print each wrist's Wi-Fi station MAC address.
 4. Fill in the left and right `WRIST_MACS` entries in the sender sketch before uploading it. The checked-in entries are all zeroes, so the sender skips both wrists until their addresses are set. Both sketches use Wi-Fi channel 1.
