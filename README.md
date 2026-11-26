@@ -2,17 +2,17 @@
 
 **CEG2002 Embedded System Design · CEG2001 · Singapore Institute of Technology**
 
-SmartStick is a foldable walking-stick prototype with left and right ultrasonic ranging, a water-sensor buzzer, and motorized sensor covers. The MSP430F5529 reads the sensors, drives the covers and buzzer, and sends distance data over UART to the cane-side XIAO ESP32-S3. The SenseStep development firmware includes the ESP-NOW bridge and wristband receivers for left and right vibration feedback.
+SmartStick is a foldable walking-stick prototype with left and right ultrasonic ranging, a water-sensor buzzer, and motorized sensor covers. The MSP430F5529 sends distance readings over UART to the cane's ESP32. The sender relays each side's reading over ESP-NOW to the corresponding wrist receiver, which varies its vibration rate with distance.
 
-## Where to start
+## Submission firmware
 
-| What you need | Where to find it |
+| Program | Source |
 | --- | --- |
-| Final MSP430 cane firmware | [`main.c`](CEG2002_Project_Codes/MSP_Codes/main.c) |
-| Final-build component tests | [FSR](CEG2002_Project_Codes/MSP_Codes/FSR_Test.c), [Servo](CEG2002_Project_Codes/MSP_Codes/Servo_Test.c), [Ultrasonic](CEG2002_Project_Codes/MSP_Codes/Ultrasonic_Test.c), [Water sensor](CEG2002_Project_Codes/MSP_Codes/Water_Sensor_Test.c) |
-| ESP32 sender and wrist firmware snapshots | [ESP32 firmware](CEG2002_Project_Codes/SenseStep/firmware/esp32) |
-| Earlier development and bench tests | [SenseStep archive guide](CEG2002_Project_Codes/SenseStep/README.md) · [MSP430 tests](CEG2002_Project_Codes/SenseStep/testing/msp430) · [ESP32 tests](CEG2002_Project_Codes/SenseStep/testing/esp32) |
-| Wristband enclosure generators | [Mechanical scripts](CEG2002_Project_Codes/SenseStep/mechanical) |
+| MSP430 cane | [`main.c`](firmware/msp430/main.c) |
+| ESP32 sender | [`sensestep_sender.ino`](firmware/esp32/sensestep_sender/sensestep_sender.ino) |
+| ESP32 wrist receiver | [`sensestep_wrist.ino`](firmware/esp32/sensestep_wrist/sensestep_wrist.ino) and its two headers in the [receiver sketch folder](firmware/esp32/sensestep_wrist) |
+
+Component tests and earlier prototypes are documented in the [testing guide](testing/README.md).
 
 ## How the final firmware works
 
@@ -32,11 +32,13 @@ The cane sends a five-byte UART frame for each side at 9600 baud, 8N1. A frame c
 | P3.5 | Both HC-SR04 sensors | Shared TRIG |
 | P2.5 | Left HC-SR04 | ECHO through a 10 kΩ / 15 kΩ voltage divider |
 | P1.5 | Right HC-SR04 | ECHO through a 10 kΩ / 15 kΩ voltage divider |
-| P3.3 (UCA0TXD) | Cane-side XIAO ESP32-S3 | Connect to D7 / RX. UART uses 9600 baud, 8N1. |
+| P3.3 (UCA0TXD) | Cane-side ESP32 | Connect to the sender sketch's D7 / RX. UART uses 9600 baud, 8N1. |
 | P7.0 (A12) | Water sensor | Signal S through a 10 kΩ / 15 kΩ voltage divider |
 | P6.0 (A0) | FSR grip sensor | Junction between the FSR and the 10 kΩ pull-down |
 | P1.0 | Onboard red LED | Left obstacle indicator |
 | P4.7 | Onboard green LED | Right obstacle indicator |
+
+The MSP430 source header records ESP RX as GPIO 18. The submitted sender sketch sets RX to D7, which is the pin shown in this wiring table.
 
 **Power and ground**
 
@@ -44,8 +46,10 @@ The cane sends a five-byte UART frame for each side at 9600 baud, 8N1. A frame c
 - **5 V** supplies the two HC-SR04 modules, water-sensor module, and servo power connections.
 - **Common ground** connects the MSP430, XIAO, sensors, servos, buzzer, and voltage dividers.
 
-## Build and bench check
+## Build and upload
 
-1. Create an MSP430F5529 project in Code Composer Studio. Add [`main.c`](CEG2002_Project_Codes/MSP_Codes/main.c) as the entry point, or build one component test at a time.
-2. Check the final-build wiring against the table above. Use the individual test sources to confirm the grip input, cover motion, left and right ultrasonic readings, and water-sensor response on the bench.
-3. For the wireless and wristband bench setup, follow the [SenseStep archive guide](CEG2002_Project_Codes/SenseStep/README.md). Earlier prototypes have their own pin assignments and sketch pairings.
+1. In Code Composer Studio, create an MSP430F5529 project and add `firmware/msp430/main.c` as its entry point.
+2. Open the ESP32 sketches in Arduino IDE. The checked-in sketches target the `XIAO_ESP32S3` board with Espressif Arduino core 3.3.12 and USB CDC On Boot enabled.
+3. Upload the same receiver sketch to each wrist board. Connect D10 to the motor module input and share ground. Open Serial Monitor at 115200 baud and send `m` to print each wrist's Wi-Fi station MAC address.
+4. Fill in the left and right `WRIST_MACS` entries in the sender sketch before uploading it. The checked-in entries are all zeroes, so the sender skips both wrists until their addresses are set. Both sketches use Wi-Fi channel 1.
+5. Connect the MSP430 and ESP32 sender as shown in the wiring table. Grip the FSR and verify that the sender logs left and right distances and that the corresponding wrist pulses faster as an obstacle gets closer.
